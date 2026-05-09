@@ -30,16 +30,13 @@ $K230,valid,cx,cy,dx,dy,dist,w,h*CS\r\n
 
 ## F407_TEST 当前实现
 
-`F407_TEST/Core/Src/app.c` 是应用层入口。它创建七个 RT-Thread 线程：
+`F407_TEST/Core/Src/app.c` 是应用层入口。它创建四个 RT-Thread 线程：
 
 ```text
-k230     USART6 RX 唤醒，20 ms 超时兜底，处理 K230 串口行解析
-motor    TRACK 事件唤醒，10 ms 超时兜底，处理命令、回包和 S_CPOS
-track    K230 新帧唤醒，30 ms 控制节流，生成云台运动命令
-mon      50 ms 阻塞等待控制事件，并按 200 ms 发布 LCD 快照
+ctrl     10 ms 周期处理 K230 解析、云台运动、S_CPOS 和追踪控制
+mon      50 ms 处理控制事件日志、USART1 调参，并按 200 ms 刷新 LCD
 imu      25 ms 姿态采样，I2C 失败后应用层恢复
 chassis  10 ms 底盘跟随，目标有效时低速运动，目标丢失时刹车
-lcd      阻塞等待状态快照，只负责 ST7735 显示
 ```
 
 关键文件：

@@ -56,9 +56,6 @@ static void ctrl_on_k230_target(const track_target_t *pTarget, void *pUser)
     level = rt_hw_interrupt_disable();
     g_ctrl.target = *pTarget;
     rt_hw_interrupt_enable(level);
-    if (target.valid == 0U)
-    {
-    }
 
     memset(&event, 0, sizeof(event));
     event.type = EMM_V5_CTRL_EVENT_K230_FRAME;

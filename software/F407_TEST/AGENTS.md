@@ -16,8 +16,7 @@ K230视觉输入 -> 二维云台追踪 -> IMU姿态参考 -> 底盘低速跟随 
   负责 HAL、时钟、GPIO、DMA、UART、I2C、SPI、定时器等基础初始化，然后进入
   `app_main()`。
 - `Core/Src/app.c`
-  应用层入口，创建 `k230`、`motor`、`track`、`mon`、`imu`、`chassis`、`lcd`
-  七个 RT-Thread 线程。
+  应用层入口，创建 `ctrl`、`mon`、`imu`、`chassis` 四个 RT-Thread 线程。
 - `HARDWARE/Emm_V5/emm_v5_ctrl.c`
   云台控制协调器，只编排 K230 解析、跟踪控制、电机驱动和状态导出。
 - `HARDWARE/Emm_V5/k230_parser.c`
@@ -30,13 +29,10 @@ K230视觉输入 -> 二维云台追踪 -> IMU姿态参考 -> 底盘低速跟随 
 线程分工：
 
 ```text
-k230     -> USART6 RX 唤醒，20 ms 超时兜底
-motor    -> TRACK 事件唤醒，10 ms 超时兜底
-track    -> K230 新帧唤醒，30 ms 控制节流
-mon      -> 控制事件日志 + 200 ms LCD 快照 + USART1 调参
+ctrl     -> 10 ms 周期处理 K230、云台电机、S_CPOS 和追踪控制
+mon      -> 控制事件日志 + 200 ms LCD 刷新 + USART1 调参
 imu      -> 25 ms 姿态采样，I2C 失败后应用层恢复
 chassis  -> 10 ms 低速跟随，目标丢失时刹车
-lcd      -> 阻塞等待状态快照，只负责显示
 ```
 
 ## 3. 串口、总线与地址
@@ -71,6 +67,7 @@ I2C1 PB6/PB7             ICM42688/QMC5883P 等 I2C 设备
 - `CS` 按两位大写十六进制 XOR 校验。
 - 每个新 K230 帧都会更新目标快照和 `frame_seq`。
 - `track_controller.c` 只消费新 K230 坐标，没有新帧时不重复使用旧 `dx/dy`。
+- K230 发来 `valid=0` 的新帧时，追踪控制会重置 PID 并触发一次停止事件。
 - 目标帧超过 `300 ms` 后停止继续跟踪。
 - 跟踪周期为 `30 ms`。
 - 跟踪速度为 `25 rpm`。

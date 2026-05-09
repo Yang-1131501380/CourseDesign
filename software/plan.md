@@ -1,5 +1,19 @@
 - # F407_TEST 重构计划（详细实施版）
 
+  ## 当前优化版状态（2026-05-09）
+
+  当前 Git 基线已保存为 `baseline-current`，开发分支为
+  `feature/next-tracking-version`。旧计划中的工具函数、Emm_V5 通道拆分、
+  `EmmV5Ctrl_Init(callback)`、ST7735 让出 CPU、ICM42688/AHRS 状态封装、
+  底盘结构体封装和线程合并已经基本落到当前版本。
+
+  本轮优化只补当前仍有价值的边界行为：
+
+  - `valid=0` 的 K230 新帧会让追踪控制重置 PID，并按帧序号只触发一次停止事件。
+  - 保留 `300 ms` 目标超时停止逻辑。
+  - 同步 `project_summary.md` 和 `F407_TEST/AGENTS.md` 的当前四线程描述。
+  - 不改变 K230 协议、USART6 输入、USART2 云台总线或底盘/IMU 主逻辑。
+
   ## 背景
 
   对 `F407_TEST/` 进行重构，参考 xrobot 组件化设计思想，利用 RT-Thread 特性：

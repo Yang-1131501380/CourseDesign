@@ -94,6 +94,12 @@ void TrackController_Process(TRACK_CONTROLLER_S *pCtrl,
 
     if (pTarget->valid == 0U)
     {
+        if ((pCtrl->stop_seq != pTarget->seq) && (pCtrl->stop_cb != NULL))
+        {
+            pCtrl->stop_seq = pTarget->seq;
+            track_reset_pid(pCtrl);
+            pCtrl->stop_cb(2U, pCtrl->p_user);
+        }
         return;
     }
 
