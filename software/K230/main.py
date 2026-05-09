@@ -1,9 +1,9 @@
 """
 K230 red target tracking with UART2 output.
 
-Tracking uses LAB red blob detection. Distance uses a calibrated monocular
-approximation based on blob area, which is more tolerant of target rotation
-than strict rectangle PnP for a plain red block.
+Tracking uses red blob detection.
+Distance uses a calibrated monocular approximation based on blob area, which is
+more rotation-tolerant than using only the axis-aligned bounding box.
 """
 
 import gc
@@ -17,8 +17,7 @@ from media.display import Display
 from media.media import MediaManager
 from media.sensor import Sensor
 
-
-LCD_WIDTH = 640
+LCD_WIDTH = 800
 LCD_HEIGHT = 480
 
 IMAGE_WIDTH = 640
@@ -26,12 +25,14 @@ IMAGE_HEIGHT = 480
 
 UART_BAUDRATE = 256000
 
-RED_THRESHOLDS = [(30, 100, 15, 127, 15, 127)]
+RED_THRESHOLDS = [(15, 78, 24, 89, 12, 92)]
 AREA_THRESHOLD = 400
+INFO_FONT_BIG = 48
+INFO_FONT_MID = 34
+INFO_TOP_Y = 6
 
 TARGET_WIDTH_CM = 6.0
 TARGET_HEIGHT_CM = 6.0
-TARGET_AREA_CM2 = TARGET_WIDTH_CM * TARGET_HEIGHT_CM
 
 CAMERA_MATRIX = [
     740.7833044413, 0.0, 395.3743649561,
@@ -97,10 +98,7 @@ def send_packet(uart, valid, cx, cy, dx, dy, distance_cm, width, height):
 
 
 def score_blob(blob):
-    center_error = abs(blob.cx() - IMAGE_WIDTH / 2) + \
-        abs(blob.cy() - IMAGE_HEIGHT / 2)
-    area = blob.pixels()
-    return area - center_error * 2
+    return blob.pixels()
 
 
 def select_best_blob(blobs):
@@ -120,60 +118,101 @@ def select_best_blob(blobs):
     return best_blob
 
 
-def median3(a, b, c):
-    if a > b:
-        a, b = b, a
-    if b > c:
-        b, c = c, b
-    if a > b:
-        a, b = b, a
+def clamp_positive(value, default_value):
+    if value > 1.0:
+        return value
 
-    return b
+    return default_value
 
 
 def estimate_distance_cm(blob):
-    width_px = max(blob.w(), 1)
-    height_px = max(blob.h(), 1)
-    area_px = max(blob.pixels(), 1)
+    width_px = clamp_positive(float(blob.w()), 1.0)
+    height_px = clamp_positive(float(blob.h()), 1.0)
+    area_px = clamp_positive(float(blob.pixels()), width_px * height_px)
 
     dist_from_width = FX * TARGET_WIDTH_CM / width_px
     dist_from_height = FY * TARGET_HEIGHT_CM / height_px
-    dist_from_area = FOCAL_MEAN * math.sqrt(TARGET_AREA_CM2 / area_px)
-    median_estimate = median3(dist_from_width, dist_from_height,
-                              dist_from_area)
+    dist_from_area = FOCAL_MEAN * math.sqrt(
+        TARGET_WIDTH_CM * TARGET_HEIGHT_CM / area_px
+    )
 
+    estimates = [dist_from_width, dist_from_height, dist_from_area]
+    estimates.sort()
+    median_estimate = estimates[1]
+
+    # Area estimate is usually less sensitive to in-plane rotation for a
+    # uniformly colored square target, while the median suppresses outliers.
     return (dist_from_area * 0.7) + (median_estimate * 0.3)
 
 
 def correct_distance_cm(raw_cm):
-    fixed_cm = 0.736 * raw_cm + 2.45
-    print("raw:", raw_cm, "fixed:", fixed_cm)
+    fixed_cm = 0.7 * raw_cm + 2.45
     return fixed_cm
 
 
+def draw_center_text(img, y, font_size, text, color):
+    text_width = len(text) * font_size // 2
+    x = max(0, (IMAGE_WIDTH - text_width) // 2)
+
+    img.draw_string_advanced(x + 2, y + 2, font_size, text,
+                             color=(0, 0, 0))
+    img.draw_string_advanced(x, y, font_size, text, color=color)
+
+
+def draw_status_text(img, valid, distance_cm, dx, dy, fps_value):
+    if valid:
+        draw_center_text(
+            img,
+            INFO_TOP_Y,
+            INFO_FONT_BIG,
+            "D:{:.1f}cm".format(distance_cm),
+            (255, 255, 0)
+        )
+        draw_center_text(
+            img,
+            INFO_TOP_Y + INFO_FONT_BIG + 4,
+            INFO_FONT_MID,
+            "dx:{} dy:{} fps:{:.1f}".format(dx, dy, fps_value),
+            (255, 255, 255)
+        )
+    else:
+        draw_center_text(
+            img,
+            INFO_TOP_Y,
+            INFO_FONT_BIG,
+            "TARGET LOST",
+            (255, 64, 64)
+        )
+        draw_center_text(
+            img,
+            INFO_TOP_Y + INFO_FONT_BIG + 4,
+            INFO_FONT_MID,
+            "fps:{:.1f}".format(fps_value),
+            (255, 255, 255)
+        )
+
+
 def draw_target(img, blob, distance_cm, fps_value):
-    cx = int(blob.cx())
-    cy = int(blob.cy())
+    x = blob.x()
+    y = blob.y()
+    w = blob.w()
+    h = blob.h()
+    cx = blob.cx()
+    cy = blob.cy()
     dx = int(cx - IMAGE_WIDTH / 2)
     dy = int(cy - IMAGE_HEIGHT / 2)
 
-    img.draw_rectangle(blob.rect(), color=(255, 0, 0), thickness=2)
+    img.draw_rectangle(x, y, w, h, color=(255, 0, 0), thickness=2)
     img.draw_cross(cx, cy, color=(0, 255, 0), thickness=2)
-    img.draw_string_advanced(
-        0, 0, 24,
-        "dx:{} dy:{} {:.1f}cm fps:{:.1f}".format(
-            dx, dy, distance_cm, fps_value
-        ),
-        color=(255, 255, 255)
-    )
+    img.draw_cross(IMAGE_WIDTH // 2, IMAGE_HEIGHT // 2,
+                   color=(255, 255, 255), thickness=1)
+    draw_status_text(img, True, distance_cm, dx, dy, fps_value)
 
 
 def draw_no_target(img, fps_value):
-    img.draw_string_advanced(
-        0, 0, 24,
-        "target lost fps:{:.1f}".format(fps_value),
-        color=(255, 255, 255)
-    )
+    img.draw_cross(IMAGE_WIDTH // 2, IMAGE_HEIGHT // 2,
+                   color=(255, 255, 255), thickness=1)
+    draw_status_text(img, False, 0.0, 0, 0, fps_value)
 
 
 def main():
@@ -191,11 +230,9 @@ def main():
         while True:
             clock.tick()
             img = sensor.snapshot()
-
             blobs = img.find_blobs(
                 RED_THRESHOLDS,
-                area_threshold=AREA_THRESHOLD,
-                merge=True
+                area_threshold=AREA_THRESHOLD
             )
             best_blob = select_best_blob(blobs)
             fps_value = clock.fps()
