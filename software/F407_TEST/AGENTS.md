@@ -40,7 +40,7 @@ chassis  -> 10 ms 低速跟随，目标丢失时刹车
 ```text
 USART1 / UART_MULTI_CH1  调试日志、手动命令，115200
 USART2 / UART_MULTI_CH2  EMM_V5 云台驱动器总线，256000
-USART6 / UART_MULTI_CH6  真实 K230 输入，256000
+USART6 / UART_MULTI_CH6  真实 K230 输入，460800
 I2C1 PB6/PB7             ICM42688/QMC5883P 等 I2C 设备
 ```
 
@@ -69,10 +69,10 @@ I2C1 PB6/PB7             ICM42688/QMC5883P 等 I2C 设备
 - `track_controller.c` 只消费新 K230 坐标，没有新帧时不重复使用旧 `dx/dy`。
 - K230 发来 `valid=0` 的新帧时，追踪控制会重置 PID 并触发一次停止事件。
 - 目标帧超过 `300 ms` 后停止继续跟踪。
-- 跟踪周期为 `30 ms`。
-- 跟踪速度为 `25 rpm`。
+- 跟踪周期为 `20 ms`。
+- 跟踪速度为 `45 rpm`。
 - PID 默认值为 yaw/pitch `kp=0.6, kd=0.12`。
-- 死区 `10 px`，输出范围 `80 clk` 到 `300 clk`。
+- 死区 `50 px`，输出最大 `420 clk`。
 - 云台真实位置通过 `S_CPOS` 查询。
 - LCD 的 `g/p` 是云台 yaw/pitch 绝对位置反馈换算角。
 - LCD 的 `by` 是底盘 IMU 上电稳定后的相对 yaw。

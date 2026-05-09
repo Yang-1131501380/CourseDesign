@@ -17,7 +17,7 @@ K230视觉检测 -> STM32 USART6 -> 云台追踪 -> 底盘低速跟随 -> LCD/US
 ```text
 USART1 / UART_MULTI_CH1  调试日志、手动命令
 USART2 / UART_MULTI_CH2  EMM_V5 云台驱动器总线，256000
-USART6 / UART_MULTI_CH6  K230 输入，256000，PC7
+USART6 / UART_MULTI_CH6  K230 输入，460800，PC7
 I2C1 PB6/PB7             ICM42688
 云台地址                 yaw=1，pitch=2
 ```
@@ -60,21 +60,22 @@ CPOS/错误/ACK 解析。LCD 文本刷新采用 DMA 队列，SPI 完成回调只
 
 ```text
 target timeout     300 ms
-track period       30 ms
-track velocity     25 rpm
-deadzone           10 px
-output range       80..300 clk
+track period       20 ms
+track velocity     45 rpm
+deadzone           50 px
+output range       80..420 clk
 pos period         100 ms
 ```
 
 底盘跟随：
 
 ```text
-base speed         0.35 rps
+0..25 cm           stop forward
+25..50 cm          0.4 rps
+>50 cm             0.8 rps
 max speed          0.8 rps
-stop distance      30 cm
 yaw deadzone       5 deg
-dx deadzone        10 px
+dx deadzone        50 px
 turn default       130%
 ```
 
@@ -93,7 +94,7 @@ ag 180   更激进
 ## 联调顺序
 
 1. 只接 STM32，上电看 USART1 是否输出 `MAIN: app start`。
-2. 确认 `USART2=256000`、`USART6=256000`。
+2. 确认 `USART2=256000`、`USART6=460800`。
 3. 确认底盘在无目标时不会乱动。
 4. 接 K230 到 `USART6_RX/PC7` 并共地，运行 `K230/main.py`。
 5. 看 LCD/日志：`v=1`、`dx/dy` 合理、`g/p` 有反馈。

@@ -39,15 +39,15 @@
 
 #define APP_DEBUG_LOG_PERIOD_MS      500U    /**< 成功类串口日志限速 */
 #define APP_DROP_LOG_PERIOD_MS       1000U   /**< 事件丢弃日志限速 */
-#define APP_CHASSIS_MIN_FORWARD_RPS  0.4f    /**< 刚超过停止距离的最低跟随速度 */
-#define APP_CHASSIS_MAX_FORWARD_RPS  0.5f    /**< 远距离最大前进速度 */
+#define APP_CHASSIS_MID_FORWARD_RPS  0.4f    /**< 中距离跟随速度 */
+#define APP_CHASSIS_FAR_FORWARD_RPS  0.8f    /**< 远距离跟随速度 */
 #define APP_CHASSIS_MAX_SPEED_RPS    0.8f    /**< 左右轮最大速度限制 */
-#define APP_CHASSIS_STOP_DIST_CM     20.0f   /**< 小于该距离停止前进 */
-#define APP_CHASSIS_FULL_DIST_CM     160.0f  /**< 大于该距离保持最大速度 */
+#define APP_CHASSIS_STOP_DIST_CM     25.0f   /**< 小于等于该距离停止前进 */
+#define APP_CHASSIS_FAR_DIST_CM      50.0f   /**< 大于该距离使用远距离速度 */
 #define APP_CHASSIS_YAW_DEADZONE_DEG 5.0f    /**< 云台 yaw 回中死区 */
 #define APP_CHASSIS_TURN_GAIN_DEG    0.015f  /**< 云台 yaw 差速增益 */
 #define APP_CHASSIS_TURN_SIGN        -1.0f   /**< 云台 yaw 转向方向 */
-#define APP_CHASSIS_DX_DEADZONE_PX   10.0f   /**< 视觉 dx 微调死区 */
+#define APP_CHASSIS_DX_DEADZONE_PX   50.0f   /**< 视觉 dx 微调死区 */
 #define APP_CHASSIS_DX_TURN_GAIN     0.0008f /**< 视觉 dx 差速增益 */
 #define APP_CHASSIS_DX_TURN_SIGN     -1.0f   /**< 视觉 dx 转向方向 */
 #define APP_CHASSIS_TURN_DEFAULT     130U    /**< 默认转向百分比 */
@@ -523,7 +523,6 @@ static void chassis_thread_entry(void *pArg)
     float gimbalYawZero;
     float yawError;
     float dxError;
-    float speedScale;
     float forwardRps;
     float turnRps;
     float leftRps;
@@ -565,19 +564,14 @@ static void chassis_thread_entry(void *pArg)
                       APP_CHASSIS_DX_TURN_SIGN * turnScale;
         }
 
-        if ((status.dist_cm > 0.0f) &&
-            (status.dist_cm <= APP_CHASSIS_STOP_DIST_CM)) {
+        if (status.dist_cm <= 0.0f) {
+            forwardRps = APP_CHASSIS_MID_FORWARD_RPS;
+        } else if (status.dist_cm <= APP_CHASSIS_STOP_DIST_CM) {
             forwardRps = 0.0f;
-        } else if (status.dist_cm <= 0.0f) {
-            forwardRps = APP_CHASSIS_MIN_FORWARD_RPS;
+        } else if (status.dist_cm <= APP_CHASSIS_FAR_DIST_CM) {
+            forwardRps = APP_CHASSIS_MID_FORWARD_RPS;
         } else {
-            speedScale = (status.dist_cm - APP_CHASSIS_STOP_DIST_CM) /
-                         (APP_CHASSIS_FULL_DIST_CM -
-                          APP_CHASSIS_STOP_DIST_CM);
-            speedScale = fast_math_clampf(speedScale, 0.0f, 1.0f);
-            forwardRps = APP_CHASSIS_MIN_FORWARD_RPS +
-                         ((APP_CHASSIS_MAX_FORWARD_RPS -
-                           APP_CHASSIS_MIN_FORWARD_RPS) * speedScale);
+            forwardRps = APP_CHASSIS_FAR_FORWARD_RPS;
         }
 
         leftRps  = fast_math_clampf(forwardRps - turnRps,

@@ -4,11 +4,11 @@
 #include <string.h>
 
 #define TRACK_TIMEOUT_MS           300U
-#define TRACK_PERIOD_MS            30U
-#define TRACK_VEL                  25U
+#define TRACK_PERIOD_MS            20U
+#define TRACK_VEL                  45U
 #define TRACK_ACC                  0U
-#define TRACK_DEADZONE             10L
-#define TRACK_STEP_MAX_CLK         300L
+#define TRACK_DEADZONE             50L
+#define TRACK_STEP_MAX_CLK         420L
 #define TRACK_LIMIT_CLK            3200L
 #define TRACK_YAW_SIGN             1L
 #define TRACK_PITCH_SIGN           1L
