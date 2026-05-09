@@ -8,7 +8,7 @@
 - 入口文件：`main.py`
 - 检测方法：`Sensor.RGB565` + `img.find_blobs()` + LAB 红色阈值
 - 串口：K230 `UART2`，FPIOA `GPIO11 TX / GPIO12 RX`
-- 波特率：`460800`，对应 STM32 `USART6 / UART_MULTI_CH6`
+- 波特率：`256000`，对应 STM32 `USART6 / UART_MULTI_CH6`
 - 协议：
 
 ```text

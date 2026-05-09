@@ -377,6 +377,7 @@ static void lcd_show_state(const APP_STATE_S *pState)
     int32_t rightRps100;
     int32_t gimbalYaw10;
     int32_t gimbalPitch10;
+    uint8_t k230Received;
     char line[APP_LCD_LINE_LEN];
 
     if ((pState == NULL) || (UiText_IsBusy() != 0U)) {
@@ -388,6 +389,7 @@ static void lcd_show_state(const APP_STATE_S *pState)
     rightRps100   = app_float_scale(pState->chassis_right_rps, 100.0f);
     gimbalYaw10   = app_float_scale(pState->track.gimbal_yaw_deg, 10.0f);
     gimbalPitch10 = app_float_scale(pState->track.gimbal_pitch_deg, 10.0f);
+    k230Received  = (pState->track.frame_seq != 0U) ? 1U : 0U;
 
     (void)snprintf(line, sizeof(line), "t%lu by%ld.%01ld",
                    (unsigned long)(pState->uptime_ms / 1000U),
@@ -397,15 +399,17 @@ static void lcd_show_state(const APP_STATE_S *pState)
                              ST7735_COLOR_BLACK) == 0U) {
         return;
     }
-    (void)snprintf(line, sizeof(line), "s:%-9lu v:%u",
-                   (unsigned long)pState->track.frame_seq,
-                   pState->track.valid);
+    (void)snprintf(line, sizeof(line), "K:%s v:%u s%04lu",
+                   (k230Received != 0U) ? "RX" : "NO",
+                   pState->track.valid,
+                   (unsigned long)(pState->track.frame_seq % 10000U));
     if (UiText_TryShowString(0U, 16U, line, ST7735_COLOR_GREEN,
                              ST7735_COLOR_BLACK) == 0U) {
         return;
     }
     (void)snprintf(line, sizeof(line), "dx:%-4ld dy:%-4ld",
-                   (long)pState->track.dx, (long)pState->track.dy);
+                   (long)pState->track.dx,
+                   (long)pState->track.dy);
     if (UiText_TryShowString(0U, 32U, line, ST7735_COLOR_CYAN,
                              ST7735_COLOR_BLACK) == 0U) {
         return;

@@ -40,7 +40,7 @@ IMU姿态参考 -> 底盘低速跟随 -> LCD/USART1观察
 - `USART2 / UART_MULTI_CH2`
   EMM_V5 二维云台驱动器总线，`256000`
 - `USART6 / UART_MULTI_CH6`
-  K230 输入，`460800`，`USART6_RX/PC7`
+  K230 输入，`256000`，`USART6_RX/PC7`
 - `I2C1 / PB6 PB7`
   ICM42688 等 I2C 设备
 - 云台电机地址固定：

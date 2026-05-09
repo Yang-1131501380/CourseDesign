@@ -40,7 +40,7 @@ chassis  -> 10 ms 低速跟随，目标丢失时刹车
 ```text
 USART1 / UART_MULTI_CH1  调试日志、手动命令，115200
 USART2 / UART_MULTI_CH2  EMM_V5 云台驱动器总线，256000
-USART6 / UART_MULTI_CH6  真实 K230 输入，460800
+USART6 / UART_MULTI_CH6  真实 K230 输入，256000
 I2C1 PB6/PB7             ICM42688/QMC5883P 等 I2C 设备
 ```
 
