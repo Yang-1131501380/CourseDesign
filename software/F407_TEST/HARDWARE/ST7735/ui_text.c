@@ -20,6 +20,15 @@ void UiText_ShowString(uint16_t x,
     (void)ST7735_DrawString16Dma(x, y, pStr, pointColor, backColor);
 }
 
+uint8_t UiText_TryShowString(uint16_t x,
+                             uint16_t y,
+                             const char *pStr,
+                             uint16_t pointColor,
+                             uint16_t backColor)
+{
+    return ST7735_DrawString16Dma(x, y, pStr, pointColor, backColor);
+}
+
 void UiText_Process(void)
 {
     ST7735_Process();

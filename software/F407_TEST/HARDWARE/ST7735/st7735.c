@@ -6,7 +6,7 @@
 #define ST7735_TEXT_LINE_BYTES          (ST7735_WIDTH * ST7735_FONT_HEIGHT * 2U)
 #define ST7735_TEXT_MAX_CHARS           ((ST7735_WIDTH / ST7735_FONT_WIDTH) * \
                                          (ST7735_HEIGHT / ST7735_FONT_HEIGHT))
-#define ST7735_TEXT_QUEUE_SIZE          4U
+#define ST7735_TEXT_QUEUE_SIZE          5U
 
 #define ST7735_CMD_SWRESET              0x01U
 #define ST7735_CMD_SLPOUT               0x11U
@@ -41,9 +41,11 @@ static void ST7735_SetWindow(uint16_t x0,
                              uint16_t x1,
                              uint16_t y1);
 static void ST7735_WaitIdle(void);
+static uint8_t ST7735_IsIdle(void);
 static uint8_t ST7735_AsyncPrepareLine(uint8_t bufIndex);
 static uint8_t ST7735_AsyncStartDma(uint8_t bufIndex);
 static uint8_t ST7735_StartQueuedText(void);
+static void ST7735_ProcessActiveText(void);
 static void ST7735_CopyText(char *pDst, const char *pSrc);
 static void ST7735_AsyncWritePixel(uint8_t *pBuf,
                                    uint16_t width,
@@ -140,6 +142,12 @@ static void ST7735_WaitIdle(void)
     {
         rt_thread_yield();
     }
+}
+
+static uint8_t ST7735_IsIdle(void)
+{
+    return (uint8_t)((g_st7735AsyncText.dmaBusy == 0U) &&
+                     (HAL_SPI_GetState(&hspi2) == HAL_SPI_STATE_READY));
 }
 
 static void ST7735_SetWindow(uint16_t x0,
@@ -699,6 +707,33 @@ static uint8_t ST7735_StartQueuedText(void)
     return 1U;
 }
 
+static void ST7735_ProcessActiveText(void)
+{
+    uint8_t nextBuf;
+
+    if ((g_st7735AsyncText.taskActive == 0U) ||
+        (g_st7735AsyncText.dmaBusy != 0U) ||
+        (g_st7735AsyncText.preparedValid == 0U) ||
+        (ST7735_IsIdle() == 0U))
+    {
+        return;
+    }
+
+    nextBuf = g_st7735AsyncText.preparedBuf;
+    g_st7735AsyncText.preparedValid = 0U;
+    if (ST7735_AsyncStartDma(nextBuf) == 0U)
+    {
+        return;
+    }
+
+    nextBuf = (uint8_t)(1U - nextBuf);
+    if (ST7735_AsyncPrepareLine(nextBuf) != 0U)
+    {
+        g_st7735AsyncText.preparedBuf = nextBuf;
+        g_st7735AsyncText.preparedValid = 1U;
+    }
+}
+
 static void ST7735_CopyText(char *pDst, const char *pSrc)
 {
     uint16_t i;
@@ -748,9 +783,9 @@ uint8_t ST7735_DrawString16Dma(uint16_t x,
     g_st7735TextTail = (uint8_t)((g_st7735TextTail + 1U) % ST7735_TEXT_QUEUE_SIZE);
     g_st7735TextCount++;
 
-    if (g_st7735AsyncText.taskActive == 0U)
+    if ((g_st7735AsyncText.taskActive == 0U) &&
+        (ST7735_IsIdle() != 0U))
     {
-        ST7735_WaitIdle();
         (void)ST7735_StartQueuedText();
     }
 
@@ -759,23 +794,25 @@ uint8_t ST7735_DrawString16Dma(uint16_t x,
 
 uint8_t ST7735_IsBusy(void)
 {
-    return g_st7735AsyncText.taskActive;
+    return (uint8_t)((g_st7735AsyncText.taskActive != 0U) ||
+                     (g_st7735TextCount > 0U) ||
+                     (ST7735_IsIdle() == 0U));
 }
 
 void ST7735_Process(void)
 {
+    ST7735_ProcessActiveText();
+
     if ((g_st7735AsyncText.taskActive == 0U) &&
-        (g_st7735TextCount > 0U))
+        (g_st7735TextCount > 0U) &&
+        (ST7735_IsIdle() != 0U))
     {
-        ST7735_WaitIdle();
         (void)ST7735_StartQueuedText();
     }
 }
 
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 {
-    uint8_t nextBuf;
-
     if ((hspi != &hspi2) || (g_st7735AsyncText.dmaBusy == 0U))
     {
         return;
@@ -787,22 +824,7 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
     if (g_st7735AsyncText.preparedValid == 0U)
     {
         g_st7735AsyncText.taskActive = 0U;
-        (void)ST7735_StartQueuedText();
         return;
-    }
-
-    nextBuf = g_st7735AsyncText.preparedBuf;
-    g_st7735AsyncText.preparedValid = 0U;
-    if (ST7735_AsyncStartDma(nextBuf) == 0U)
-    {
-        return;
-    }
-
-    nextBuf = (uint8_t)(1U - nextBuf);
-    if (ST7735_AsyncPrepareLine(nextBuf) != 0U)
-    {
-        g_st7735AsyncText.preparedBuf = nextBuf;
-        g_st7735AsyncText.preparedValid = 1U;
     }
 }
 
@@ -817,5 +839,4 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
     g_st7735AsyncText.preparedValid = 0U;
     g_st7735AsyncText.dmaBusy = 0U;
     g_st7735AsyncText.taskActive = 0U;
-    (void)ST7735_StartQueuedText();
 }

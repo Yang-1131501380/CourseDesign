@@ -30,7 +30,7 @@ K230视觉输入 -> 二维云台追踪 -> IMU姿态参考 -> 底盘低速跟随 
 
 ```text
 ctrl     -> 10 ms 周期处理 K230、云台电机、S_CPOS 和追踪控制
-mon      -> 控制事件日志 + 200 ms LCD 刷新 + USART1 调参
+mon      -> 10 ms 推进 LCD DMA + 控制事件日志 + 200 ms LCD 刷新 + USART1 调参
 imu      -> 25 ms 姿态采样，I2C 失败后应用层恢复
 chassis  -> 10 ms 低速跟随，目标丢失时刹车
 ```
@@ -80,6 +80,7 @@ I2C1 PB6/PB7             ICM42688/QMC5883P 等 I2C 设备
 - `USART1` 可用 `ag?`、`ag 100`、`ag 130`、`ag 180` 调底盘转向激进度。
 - 目标无效时底盘必须调用 `MotorCtrl_Stop()`。
 - K230、TRACK、MOVE 调试日志在 `app.c` 的 `mon` 线程节流。
+- ST7735 的 SPI 完成回调只更新 DMA 状态，不在回调内启动下一条文本。
 
 ## 5. IMU 与 I2C 当前状态
 

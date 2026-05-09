@@ -10,6 +10,11 @@ void UiText_ShowString(uint16_t x,
                        const char *pStr,
                        uint16_t pointColor,
                        uint16_t backColor);
+uint8_t UiText_TryShowString(uint16_t x,
+                             uint16_t y,
+                             const char *pStr,
+                             uint16_t pointColor,
+                             uint16_t backColor);
 void UiText_Process(void);
 uint8_t UiText_IsBusy(void);
 

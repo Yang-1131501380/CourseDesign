@@ -23,7 +23,7 @@
 #define APP_CHASSIS_STACK_SIZE       4096U /**< 底盘跟随线程栈 */
 
 #define APP_CTRL_PERIOD_MS           10U  /**< K230/云台轮询周期 */
-#define APP_MONITOR_PERIOD_MS        50U  /**< 日志队列等待周期 */
+#define APP_MONITOR_PERIOD_MS        10U  /**< 日志/LCD 推进周期 */
 #define APP_LCD_PERIOD_MS            200U /**< LCD 状态刷新周期 */
 #define APP_CHASSIS_PERIOD_MS        10U  /**< 底盘控制周期 */
 
@@ -38,6 +38,7 @@
 #define APP_IMU_YAW_OFFSET_DEG       24.0f /**< 当前安装姿态 yaw 修正 */
 
 #define APP_DEBUG_LOG_PERIOD_MS      500U    /**< 成功类串口日志限速 */
+#define APP_DROP_LOG_PERIOD_MS       1000U   /**< 事件丢弃日志限速 */
 #define APP_CHASSIS_MIN_FORWARD_RPS  0.4f    /**< 刚超过停止距离的最低跟随速度 */
 #define APP_CHASSIS_MAX_FORWARD_RPS  0.5f    /**< 远距离最大前进速度 */
 #define APP_CHASSIS_MAX_SPEED_RPS    0.8f    /**< 左右轮最大速度限制 */
@@ -80,10 +81,10 @@ static float g_chassis_left_rps;
 static float g_chassis_right_rps;
 static uint16_t g_chassis_turn_percent = APP_CHASSIS_TURN_DEFAULT;
 static uint8_t g_body_yaw_zero_reset = 1U;
+static uint32_t g_event_drop_count;
 
 /*============================ Internal Prototype ============================*/
 static uint32_t app_tick_ms(void);
-static rt_tick_t app_ms_to_tick(uint32_t ms);
 static int32_t app_float_scale(float value, float scale);
 static void app_thread_start(struct rt_thread *pThread,
                              const char *pName,
@@ -93,6 +94,7 @@ static void app_thread_start(struct rt_thread *pThread,
                              rt_uint32_t stackSize,
                              rt_uint8_t priority);
 static void app_publish_event(const EmmV5CtrlEvent *pEvent);
+static uint32_t app_get_event_drop_count(void);
 static void app_set_body_yaw(float bodyYaw);
 static void app_reset_body_yaw_zero(void);
 static void app_set_chassis_speed(float leftRps, float rightRps);
@@ -100,6 +102,7 @@ static uint16_t app_get_chassis_turn_percent(void);
 static void app_set_chassis_turn_percent(int32_t percent);
 static void app_fill_state(APP_STATE_S *pState);
 static void app_log_event(const EmmV5CtrlEvent *pEvent);
+static void app_log_event_drop(uint32_t nowTick);
 static void app_poll_debug_cmd(void);
 static void lcd_show_state(const APP_STATE_S *pState);
 static void ctrl_thread_entry(void *pArg);
@@ -113,16 +116,6 @@ static uint32_t app_tick_ms(void)
 {
     return (uint32_t)(((uint64_t)rt_tick_get() * 1000ULL) /
                       RT_TICK_PER_SECOND);
-}
-
-static rt_tick_t app_ms_to_tick(uint32_t ms)
-{
-    uint32_t tick;
-
-    tick = (uint32_t)(((uint64_t)ms * RT_TICK_PER_SECOND + 999ULL) /
-                      1000ULL);
-
-    return (rt_tick_t)((tick == 0U) ? 1U : tick);
 }
 
 static int32_t app_float_scale(float value, float scale)
@@ -154,6 +147,7 @@ static void app_thread_start(struct rt_thread *pThread,
 static void app_publish_event(const EmmV5CtrlEvent *pEvent)
 {
     EmmV5CtrlEvent drop;
+    rt_base_t level;
 
     if (pEvent == NULL) {
         return;
@@ -161,8 +155,23 @@ static void app_publish_event(const EmmV5CtrlEvent *pEvent)
 
     if (rt_mq_send(&g_event_mq, (void *)pEvent, sizeof(*pEvent)) != RT_EOK) {
         (void)rt_mq_recv(&g_event_mq, &drop, sizeof(drop), 0U);
+        level = rt_hw_interrupt_disable();
+        g_event_drop_count++;
+        rt_hw_interrupt_enable(level);
         (void)rt_mq_send(&g_event_mq, (void *)pEvent, sizeof(*pEvent));
     }
+}
+
+static uint32_t app_get_event_drop_count(void)
+{
+    rt_base_t level;
+    uint32_t count;
+
+    level = rt_hw_interrupt_disable();
+    count = g_event_drop_count;
+    rt_hw_interrupt_enable(level);
+
+    return count;
 }
 
 static void app_set_body_yaw(float bodyYaw)
@@ -316,6 +325,23 @@ static void app_log_event(const EmmV5CtrlEvent *pEvent)
     }
 }
 
+static void app_log_event_drop(uint32_t nowTick)
+{
+    static uint32_t lastDropTick;
+    static uint32_t lastDropCount;
+    uint32_t dropCount;
+
+    dropCount = app_get_event_drop_count();
+    if ((dropCount != lastDropCount) &&
+        ((int32_t)(nowTick - lastDropTick) >=
+         (int32_t)APP_DROP_LOG_PERIOD_MS)) {
+        lastDropTick = nowTick;
+        lastDropCount = dropCount;
+        UartMulti_Printf(UART_MULTI_CH1, "EVT: drop=%lu\r\n",
+                         (unsigned long)dropCount);
+    }
+}
+
 static void app_poll_debug_cmd(void)
 {
     static char line[APP_CMD_LINE_LEN];
@@ -367,31 +393,39 @@ static void lcd_show_state(const APP_STATE_S *pState)
                    (unsigned long)(pState->uptime_ms / 1000U),
                    (long)(bodyYaw10 / 10),
                    (long)((bodyYaw10 < 0) ? -(bodyYaw10 % 10) : (bodyYaw10 % 10)));
-    UiText_ShowString(0U, 0U, line, ST7735_COLOR_WHITE,
-                      ST7735_COLOR_BLACK);
+    if (UiText_TryShowString(0U, 0U, line, ST7735_COLOR_WHITE,
+                             ST7735_COLOR_BLACK) == 0U) {
+        return;
+    }
     (void)snprintf(line, sizeof(line), "s:%-9lu v:%u",
                    (unsigned long)pState->track.frame_seq,
                    pState->track.valid);
-    UiText_ShowString(0U, 16U, line, ST7735_COLOR_GREEN,
-                      ST7735_COLOR_BLACK);
+    if (UiText_TryShowString(0U, 16U, line, ST7735_COLOR_GREEN,
+                             ST7735_COLOR_BLACK) == 0U) {
+        return;
+    }
     (void)snprintf(line, sizeof(line), "dx:%-4ld dy:%-4ld",
                    (long)pState->track.dx, (long)pState->track.dy);
-    UiText_ShowString(0U, 32U, line, ST7735_COLOR_CYAN,
-                      ST7735_COLOR_BLACK);
+    if (UiText_TryShowString(0U, 32U, line, ST7735_COLOR_CYAN,
+                             ST7735_COLOR_BLACK) == 0U) {
+        return;
+    }
     (void)snprintf(line, sizeof(line), "l%ld.%02ld r%ld.%02ld",
                    (long)(leftRps100 / 100),
                    (long)((leftRps100 < 0) ? -(leftRps100 % 100) : (leftRps100 % 100)),
                    (long)(rightRps100 / 100),
                    (long)((rightRps100 < 0) ? -(rightRps100 % 100) : (rightRps100 % 100)));
-    UiText_ShowString(0U, 48U, line, ST7735_COLOR_YELLOW,
-                      ST7735_COLOR_BLACK);
+    if (UiText_TryShowString(0U, 48U, line, ST7735_COLOR_YELLOW,
+                             ST7735_COLOR_BLACK) == 0U) {
+        return;
+    }
     (void)snprintf(line, sizeof(line), "g%ld.%01ld p%ld.%01ld",
                    (long)(gimbalYaw10 / 10),
                    (long)((gimbalYaw10 < 0) ? -(gimbalYaw10 % 10) : (gimbalYaw10 % 10)),
                    (long)(gimbalPitch10 / 10),
                    (long)((gimbalPitch10 < 0) ? -(gimbalPitch10 % 10) : (gimbalPitch10 % 10)));
-    UiText_ShowString(0U, 64U, line, ST7735_COLOR_MAGENTA,
-                      ST7735_COLOR_BLACK);
+    (void)UiText_TryShowString(0U, 64U, line, ST7735_COLOR_MAGENTA,
+                               ST7735_COLOR_BLACK);
 }
 
 static void ctrl_thread_entry(void *pArg)
@@ -420,17 +454,18 @@ static void monitor_thread_entry(void *pArg)
     UiText_Clear(ST7735_COLOR_BLACK);
     while (1) {
         UiText_Process();
-        if (rt_mq_recv(&g_event_mq, &event, sizeof(event),
-                       app_ms_to_tick(APP_MONITOR_PERIOD_MS)) == RT_EOK) {
+        if (rt_mq_recv(&g_event_mq, &event, sizeof(event), 0U) == RT_EOK) {
             app_log_event(&event);
         }
         app_poll_debug_cmd();
+        app_log_event_drop(app_tick_ms());
         if ((int32_t)(app_tick_ms() - lastLcdTick) >=
             (int32_t)APP_LCD_PERIOD_MS) {
             app_fill_state(&state);
             lcd_show_state(&state);
             lastLcdTick = app_tick_ms();
         }
+        rt_thread_mdelay(APP_MONITOR_PERIOD_MS);
     }
 }
 
