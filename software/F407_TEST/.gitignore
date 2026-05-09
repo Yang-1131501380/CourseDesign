@@ -1,0 +1,44 @@
+# Build outputs
+build/
+Debug/
+Release/
+Objects/
+Listings/
+
+# ARM/Keil/GCC generated files
+*.o
+*.obj
+*.d
+*.axf
+*.elf
+*.map
+*.hex
+*.bin
+*.lst
+*.crf
+*.htm
+*.lnp
+
+# Keil local user/session files
+*.uvguix.*
+*.uvgui.*
+*.uvoptx
+*.uvopt
+JLinkLog.txt
+JLinkSettings.ini
+
+# CMake and tooling cache
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+.cache/
+
+# Editor and OS local files
+.vscode/.browse.*
+.idea/
+*.swp
+*.tmp
+*.log
+Thumbs.db
+Desktop.ini

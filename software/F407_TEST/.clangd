@@ -1,0 +1,11 @@
+CompileFlags:
+  Add:
+    - -IE:\keil5\ARM\ARMCLANG/include
+    - -IE:\keil5\ARM\ARMCLANG/include/libcxx
+    - -Inull/include
+    - -Inull/include/libcxx
+    - -IE:\keil5\ARM\ARMCLANG\bin/include
+    - -IE:\keil5\ARM\ARMCLANG\bin/include/libcxx
+  Remove: []
+  CompilationDatabase: ./build/STM32F407_TEST
+  Compiler: E:\keil5\ARM\ARMCLANG\bin\armclang.exe

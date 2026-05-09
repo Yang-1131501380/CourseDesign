@@ -1,0 +1,28 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "files.associations": {
+            "lcd_driver.h": "c",
+            "rtthread.h": "c",
+            "rtconfig.h": "c",
+            "rtdebug.h": "c",
+            "lcd_config.h": "c",
+            "rthw.h": "c",
+            "c_base.h": "c",
+            "uart_multi.h": "c",
+            "font.h": "c",
+            "gpio.h": "c",
+            "ui_text.h": "c",
+            "kfifo.h": "c",
+            "rtatomic.h": "c",
+            "app.h": "c",
+            "main.h": "c",
+            "emm_v5_ctrl.h": "c"
+        }
+    },
+    "extensions": {}
+}

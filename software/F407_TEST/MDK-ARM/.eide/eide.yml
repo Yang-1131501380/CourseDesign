@@ -1,0 +1,242 @@
+version: "4.1"
+name: STM32F407_TEST
+type: ARM
+deviceName: null
+packDir: null
+srcDirs: []
+virtualFolder:
+  name: <virtual_root>
+  files: []
+  folders:
+    - name: Application
+      files: []
+      folders:
+        - name: MDK-ARM
+          files:
+            - path: startup_stm32f407xx.s
+          folders: []
+        - name: User
+          files: []
+          folders:
+            - name: Core
+              files:
+                - path: ../Core/Src/main.c
+                - path: ../Core/Src/gpio.c
+                - path: ../Core/Src/dma.c
+                - path: ../Core/Src/i2c.c
+                - path: ../Core/Src/spi.c
+                - path: ../Core/Src/tim.c
+                - path: ../Core/Src/usart.c
+                - path: ../Core/Src/stm32f4xx_it.c
+                - path: ../Core/Src/stm32f4xx_hal_msp.c
+                - path: ../Core/Src/stm32f4xx_hal_timebase_tim.c
+              folders: []
+    - name: Drivers
+      files: []
+      folders:
+        - name: STM32F4xx_HAL_Driver
+          files:
+            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c
+            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.c
+            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c.c
+            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c_ex.c
+            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c
+            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc_ex.c
+            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash.c
+            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ex.c
+            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ramfunc.c
+            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c
+            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma_ex.c
+            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma.c
+            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c
+            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr_ex.c
+            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c
+            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c
+            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_exti.c
+            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_spi.c
+            - path: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.c
+          folders: []
+        - name: CMSIS
+          files:
+            - path: ../Core/Src/system_stm32f4xx.c
+          folders: []
+    - name: Middlewares
+      files: []
+      folders:
+        - name: RT-Thread
+          files: []
+          folders:
+            - name: RTOS
+              files: []
+              folders:
+                - name: shell
+                  files:
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/components/finsh/src/cmd.c
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/components/finsh/src/msh.c
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/components/finsh/src/msh_file.c
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/components/finsh/src/msh_parse.c
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/components/finsh/src/shell.c
+                  folders: []
+                - name: libcpu
+                  files:
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/libcpu/arm/cortex-m4/context_rvds.S
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/libcpu/arm/cortex-m4/cpuport.c
+                  folders: []
+                - name: kernel
+                  files:
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/bsp/_template/cubemx_config/board.c
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/src/clock.c
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/src/components.c
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/src/cpu.c
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/src/idle.c
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/src/ipc.c
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/src/irq.c
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/src/kservice.c
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/src/mem.c
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/src/memheap.c
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/src/mempool.c
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/src/object.c
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/src/scheduler.c
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/src/signal.c
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/src/slab.c
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/src/thread.c
+                    - path: ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/src/timer.c
+                  folders: []
+dependenceList: []
+outDir: build
+miscInfo: {}
+targets:
+  STM32F407_TEST:
+    cppPreprocessAttrs:
+      defineList:
+        - USE_HAL_DRIVER
+        - STM32F407xx
+      incList:
+        - ../Core/Inc
+        - ../Drivers/STM32F4xx_HAL_Driver/Inc
+        - ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy
+        - ../Drivers/CMSIS/Device/ST/STM32F4xx/Include
+        - ../Drivers/CMSIS/Include
+        - ../RT-Thread
+        - ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/components/finsh/inc
+        - ../Middlewares/Third_Party/RealThread_RTOS_RT-Thread/include
+        - .cmsis/include
+        - RTE/_STM32F407_TEST
+      libList: []
+    excludeList: []
+    settings: {}
+    toolchain: AC5
+    toolchainConfigMap:
+      AC5:
+        archExtensions: ""
+        cpuType: Cortex-M4
+        floatingPointHardware: single
+        options:
+          version: 4
+          afterBuildTasks: []
+          asm-compiler:
+            defines: []
+          beforeBuildTasks: []
+          c/cpp-compiler:
+            CXX_FLAGS: --diag_suppress=1 --diag_suppress=1295
+            C_FLAGS: --diag_suppress=1 --diag_suppress=1295
+            c99-mode: true
+            one-elf-section-per-function: true
+            optimization: level-3
+            warnings: all-warnings
+          global:
+            output-debug-info: enable
+            use-microLIB: false
+          linker:
+            $outputTaskExcludes:
+              - .bin
+            output-format: elf
+            ro-base: ""
+            rw-base: ""
+            xo-base: ""
+        scatterFilePath: ""
+        storageLayout:
+          RAM:
+            - id: 1
+              isChecked: false
+              mem:
+                size: "0x0"
+                startAddr: "0x0"
+              noInit: false
+              tag: RAM
+            - id: 2
+              isChecked: false
+              mem:
+                size: "0x0"
+                startAddr: "0x0"
+              noInit: false
+              tag: RAM
+            - id: 3
+              isChecked: false
+              mem:
+                size: "0x0"
+                startAddr: "0x0"
+              noInit: false
+              tag: RAM
+            - id: 1
+              isChecked: true
+              mem:
+                size: ""
+                startAddr: ""
+              noInit: false
+              tag: IRAM
+            - id: 2
+              isChecked: true
+              mem:
+                size: "0x0"
+                startAddr: "0x0"
+              noInit: false
+              tag: IRAM
+          ROM:
+            - id: 1
+              isChecked: false
+              isStartup: false
+              mem:
+                size: "0x0"
+                startAddr: "0x0"
+              tag: ROM
+            - id: 2
+              isChecked: false
+              isStartup: false
+              mem:
+                size: "0x0"
+                startAddr: "0x0"
+              tag: ROM
+            - id: 3
+              isChecked: false
+              isStartup: false
+              mem:
+                size: "0x0"
+                startAddr: "0x0"
+              tag: ROM
+            - id: 1
+              isChecked: true
+              isStartup: true
+              mem:
+                size: ""
+                startAddr: ""
+              tag: IROM
+            - id: 2
+              isChecked: true
+              isStartup: false
+              mem:
+                size: "0x0"
+                startAddr: "0x0"
+              tag: IROM
+        useCustomScatterFile: false
+    uploadConfigMap:
+      JLink:
+        baseAddr: ""
+        bin: ""
+        cpuInfo:
+          cpuName: "null"
+          vendor: "null"
+        otherCmds: ""
+        proType: 1
+        speed: 8000
+    uploader: JLink

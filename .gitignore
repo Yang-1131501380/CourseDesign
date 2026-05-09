@@ -1,0 +1,67 @@
+# Default: keep this repository focused on the active course-design code.
+*
+
+# Repository metadata
+!/.gitignore
+!/.gitattributes
+
+# Root documents
+!/AGENTS.md
+!/毕业设计各模块.md
+
+# Workspace documents
+!/software/
+!/software/AGENTS.md
+!/software/project_summary.md
+!/software/plan.md
+
+# Active STM32 and K230 projects
+!/software/F407_TEST/
+!/software/F407_TEST/**
+!/K230/
+!/K230/**
+
+# Build outputs and local generated files
+**/build/
+**/Debug/
+**/Release/
+**/Objects/
+**/Listings/
+**/*.o
+**/*.obj
+**/*.d
+**/*.axf
+**/*.elf
+**/*.map
+**/*.hex
+**/*.bin
+**/*.exe
+**/*.dll
+**/*.sys
+**/*.zip
+**/*.rar
+**/*.pkg
+**/*.cat
+**/*.lib
+**/*.LIB
+**/*.stl
+**/*.STL
+**/*.eprj2
+**/*.eprj_backup
+**/*.lst
+**/*.crf
+**/*.htm
+**/*.lnp
+**/*.log
+**/*.tmp
+**/*.uvguix.*
+**/*.uvgui.*
+**/*.uvoptx
+**/*.uvopt
+**/JLinkLog.txt
+**/JLinkSettings.ini
+**/.cache/
+**/.idea/
+**/.vscode/.browse.*
+**/Thumbs.db
+**/Desktop.ini
