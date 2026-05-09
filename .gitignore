@@ -18,6 +18,8 @@
 # Active STM32 and K230 projects
 !/software/F407_TEST/
 !/software/F407_TEST/**
+!/software/K230/
+!/software/K230/**
 !/K230/
 !/K230/**
 
