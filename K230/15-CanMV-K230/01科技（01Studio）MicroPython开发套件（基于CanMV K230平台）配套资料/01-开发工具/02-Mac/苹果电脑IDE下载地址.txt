@@ -1,3 +1,0 @@
-https://kendryte-download.canaan-creative.com/developer/tools/canmv_ide_k230/4.0.8/
-
-里面的：canmv-ide-mac-4.0.8.dmg 

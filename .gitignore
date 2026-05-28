@@ -20,8 +20,9 @@
 !/software/F407_TEST/**
 !/software/K230/
 !/software/K230/**
-!/K230/
-!/K230/**
+!/hardware/
+!/hardware/README.md
+!/hardware/CousrseDesign.eprj2
 
 # Build outputs and local generated files
 **/build/
