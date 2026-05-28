@@ -30,6 +30,11 @@ K230 target detection
 - `hardware/`
   嘉立创EDA硬件设计文件与硬件说明
 
+Quick entry:
+
+- `software/README.md` for software architecture and module layout
+- `hardware/README.md` for hardware design scope and system connection overview
+
 ## Core Software
 
 - K230 视觉串口协议解析

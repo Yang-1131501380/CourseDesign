@@ -7,11 +7,10 @@
 
 # Root documents
 !/AGENTS.md
-!/毕业设计各模块.md
-
 # Workspace documents
 !/software/
 !/software/AGENTS.md
+!/software/README.md
 !/software/project_summary.md
 !/software/plan.md
 
